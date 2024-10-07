@@ -303,11 +303,3 @@ bool check_for_free_cells_bool(Forest* forest) {
     }
     return false; // There are no free cells
 }
-
-void clear_console() {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
-}

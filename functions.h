@@ -63,7 +63,6 @@ void display_forest_and_log(Forest *forest); // Display the forest matrix
 void saveIntoLogs(const char* log, Forest* forest); // Save a log into the logs array
 bool check_for_free_cells_bool(Forest* forest); // Check if there are free cells in the forest
 FireLocation where_fire_nearby(Forest* forest, int x, int y); // Find where fire is near a sensor
-void clear_console(); // Clear the console
 
 
 #endif //FUNCTIONS_H
