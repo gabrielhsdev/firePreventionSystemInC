@@ -7,6 +7,7 @@ int main(void)
     pthread_t sensors[NUM_SENSORS];
     pthread_t fire_generator;
     pthread_t central_control;
+    pthread_t check_free_cells;
 
     // Initialize forest
     initialize_forest(&forest);
@@ -25,6 +26,7 @@ int main(void)
     }
     pthread_create(&fire_generator, NULL, fire_generator_thread, (void *)&forest);
     pthread_create(&central_control, NULL, central_control_thread, (void *)&forest);
+    pthread_create(&check_free_cells, NULL, check_free_cells_thread, (void *)&forest);
 
     // Wait for threads
     for (int i = 0; i < NUM_SENSORS; i++) {

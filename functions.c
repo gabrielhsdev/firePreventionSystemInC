@@ -17,6 +17,11 @@ void* sensor_thread(void* arg) {
                         // Get where the fire is
                         FireLocation fire_location = where_fire_nearby(forest, i, j);
 
+                        // If we are on a border, continue
+                        if (fire_location.x == SIZE - 1 || fire_location.y == SIZE - 1 || fire_location.x == 0 || fire_location.y == 0) {
+                            continue;
+                        }
+
                         char str[100];
                         sprintf(str, "Sensor em (%d, %d) detectou fogo!", i, j);
                         saveIntoLogs(str, forest);
@@ -65,6 +70,8 @@ void* fire_generator_thread(void* arg) {
 
         pthread_mutex_unlock(&forest->mutex);
 
+        /*
+        // This part of the code would be used if we wanted to keep the fire active for a certain time, then change it to burnt
         sleep(FIRE_DURATION); // Fire is active for this time
 
         // Change the state of the fire to burnt
@@ -79,6 +86,7 @@ void* fire_generator_thread(void* arg) {
             display_forest_and_log(forest);  // Exibir a matriz após queimar fogo
         }
         pthread_mutex_unlock(&forest->mutex);
+        */
 
         sleep(FIRE_GENERATION_INTERVAL); // Tempo entre gerações de fogo
     }
@@ -108,6 +116,25 @@ void *central_control_thread(void *arg) {
         }
 
         sleep(FIRE_VERIFICATION_INTERVAL);  // Check every second
+    }
+
+    return NULL;
+}
+
+void* check_free_cells_thread(void* arg) {
+    Forest* forest = (Forest*)arg;
+
+    while (1) {
+        pthread_mutex_lock(&forest->mutex);
+        if (!check_for_free_cells_bool(forest)) {
+            // No free cells, signal threads to terminate
+            printf("No free cells left. Exiting...\n");
+            pthread_mutex_unlock(&forest->mutex);
+            exit(0); // End the program
+        }
+        pthread_mutex_unlock(&forest->mutex);
+
+        sleep(FIRE_VERIFICATION_INTERVAL); // Check every second or as needed
     }
 
     return NULL;
@@ -228,7 +255,7 @@ void place_sensors(Forest *forest) {
 
 void fight_fire(Forest* forest, int x, int y) {
     // Change to burnt cell
-    forest->forest[x][y] = WATER;
+    forest->forest[x][y] = BURNT;
 
     // Log
     char str[100];
@@ -239,12 +266,21 @@ void fight_fire(Forest* forest, int x, int y) {
 void fight_all_fires(Forest* forest) {
     // Lock
     pthread_mutex_lock(&forest->mutex);
+
+    // Add a log to say that all fires are being fought
+    // Timestamp for the log hh:mm:ss + todos os fogos estão sendo apagados
+    char str[100];
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(str, "%02d:%02d:%02d - Todos os fogos estão sendo apagados", tm.tm_hour, tm.tm_min, tm.tm_sec);
+    saveIntoLogs(str, forest);
+
     // Check all cells
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             if (forest->forest[i][j] == FIRE) {
                 // Change to burnt cell
-                forest->forest[i][j] = WATER;
+                forest->forest[i][j] = BURNT;
                 // Log
                 char str[100];
                 sprintf(str, "Fogo em (%d, %d) foi apagado", i, j);
@@ -254,6 +290,18 @@ void fight_all_fires(Forest* forest) {
     }
     // Unlock
     pthread_mutex_unlock(&forest->mutex);
+}
+
+bool check_for_free_cells_bool(Forest* forest) {
+    // Check if there are free cells in the forest
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (forest->forest[i][j] == EMPTY) {
+                return true; // There are free cells
+            }
+        }
+    }
+    return false; // There are no free cells
 }
 
 void clear_console() {

@@ -21,12 +21,13 @@
 #define SENSOR 'T'
 #define FIRE '@'
 #define BURNT '/'
-#define WATER 'W'
 
 // Time intervals
-#define FIRE_VERIFICATION_INTERVAL 1
+#define DEFAULT_GENERATION_VERIFICATION_INTERVAL 1
+#define FIRE_VERIFICATION_INTERVAL DEFAULT_GENERATION_VERIFICATION_INTERVAL // Should be the same as the generation interval
+#define FIRE_GENERATION_INTERVAL DEFAULT_GENERATION_VERIFICATION_INTERVAL // Should be the same as the verification interval
 #define FIRE_DURATION 3
-#define FIRE_GENERATION_INTERVAL 1
+#include <stdbool.h>
 #include <stdlib.h>
 
 // Forest struct
@@ -42,19 +43,27 @@ typedef struct {
     int y;
 } FireLocation;
 
-// Functions
+// Forest Initialization and Setup
 void initialize_forest(Forest *forest); // Initialize the forest matrix
 void place_sensors(Forest *forest); // Place sensors in random positions
 
-void *sensor_thread(void *arg); // Sensor thread, this manages the sensors in the forest, one thread per sensor
-void *fire_generator_thread(void *arg); // Fire generator thread, this generates fire in the forest, only one thread for all the forest
-void *central_control_thread(void *arg); // Central control thread, this manages the forest, one thread for the whole forest
+// Sensor Management
+void *sensor_thread(void *arg); // Sensor thread, manages sensors in the forest
+void *check_free_cells_thread(void *arg); // Check for free cells in the forest
+
+// Fire Management
+void *fire_generator_thread(void *arg); // Fire generator thread for the entire forest
+void *central_control_thread(void *arg); // Central control thread for managing the forest
+void fight_all_fires(Forest* forest); // Fight all fires in the forest
+void fight_fire(Forest* forest, int x, int y); // Fight the fire in a specific cell
+int check_fire_nearby(Forest* forest, int x, int y); // Check if there is fire near a sensor
+
+// Utility Functions
 void display_forest_and_log(Forest *forest); // Display the forest matrix
 void saveIntoLogs(const char* log, Forest* forest); // Save a log into the logs array
-int check_fire_nearby(Forest* forest, int x, int y); // Check if there is fire nearby a sensor
+bool check_for_free_cells_bool(Forest* forest); // Check if there are free cells in the forest
+FireLocation where_fire_nearby(Forest* forest, int x, int y); // Find where fire is near a sensor
 void clear_console(); // Clear the console
-void fight_all_fires(Forest* forest); // Fight all the fires in the forest
-void fight_fire(Forest* forest, int x, int y); // Fight the fire in a cell
-FireLocation where_fire_nearby(Forest* forest, int x, int y) ; // Check where is the fire nearby a sensor
+
 
 #endif //FUNCTIONS_H
