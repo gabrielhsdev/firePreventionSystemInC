@@ -9,8 +9,8 @@
 #include <string.h>
 
 // Matrix settings
-#define SIZE 10
-#define NUM_SENSORS 5
+#define SIZE 30
+#define NUM_SENSORS 15
 
 // Logs
 #define MAX_LOGS 100
